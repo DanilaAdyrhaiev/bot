@@ -36,12 +36,8 @@ public class ChannelService {
         return channelRepository.findByUser(user);
     }
 
-    public List<Channel> getChannelsByCategory(String category) {
-        return channelRepository.findByCategory(category);
-    }
-
     public List<Channel> getAllChannelsSortedByRate(){
-        return channelRepository.findAllByOrderByRateDesc();
+        return channelRepository.findAllByCategoryIsNotNullOrderByRateDesc();
     }
 
     public void deleteChannel(Long id) {

@@ -34,7 +34,7 @@ public class CallbackQueryController {
         this.entityService = entityService;
         this.notebookService = notebookService;
 
-        commands.put("/channelInfo:", new AddChannelHandler(messageService, entityService));
+        commands.put("/channelInfo:", new ChannelInfoHandler(messageService, entityService));
         commands.put("/usersChannelInfo:", new UserChannelInfoHandler(messageService, entityService));
         commands.put("/listTop:", new ListTopHandler(messageService, entityService));
         commands.put("/deleteChannel:", new DeleteChannelHandler(messageService, entityService, channelService));
@@ -48,6 +48,8 @@ public class CallbackQueryController {
         commands.put("/Account", new AccountHandler(messageService, entityService));
         commands.put("/BackToMainMenu", new BackToMainMenuHandler(messageService, entityService));
         commands.put("/Back", new BackHandler(messageService, entityService, channelService));
+        commands.put("/editChannel:", new EditChannelHandler(messageService, entityService));
+        commands.put("/channels", new ChannelMenuHandler(messageService, entityService));
     }
 
     public Object commandProcessing(Update update){
@@ -67,11 +69,9 @@ public class CallbackQueryController {
 
     private String extractChannelId(Update update) {
         String data = update.getCallbackQuery().getData();
-        if (data.startsWith("/channelInfo:") || data.startsWith("/usersChannelInfo:") || data.startsWith("/listTop:") || data.startsWith("/deleteChannel:")) {
-            int endIndex = data.indexOf(":");
-            if (endIndex != -1) {
-                return data.substring(0, endIndex+1);
-            }
+        int endIndex = data.indexOf(":");
+        if (endIndex != -1) {
+            return data.substring(0, endIndex+1);
         }
         return null;
     }

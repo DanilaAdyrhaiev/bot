@@ -28,13 +28,17 @@ public class BackHandler implements ICommand {
 
     @Override
     public Object execute(Update update){
+        List<Object> objects = new ArrayList<>();
         switch (entityService.getUsersUsingPage(update)) {
+            case "Channels menu":
+                entityService.setUsersUsingPage(update, "Main menu");
+                return messageService.buildMainUserPage(update, entityService.getChatId(update));
+
             case "Input channel name":
                 entityService.setUserSelectedChannel(entityService.getUser(update), 0L);
                 entityService.setUsersUsingPage(update, "Main menu");
-                return entityService.getUser(update).getStatus().equals("Admin") ?
-                        messageService.buildMainAdminPage(update, entityService.getChatId(update)) :
-                        messageService.buildMainUserPage(update, entityService.getChatId(update));
+                return messageService.buildAccountPage(entityService.getChatId(update), entityService.getMessageId(update));
+
 
             case "Input channel link":
                 deleteDir(update);
@@ -59,40 +63,77 @@ public class BackHandler implements ICommand {
                 return messageService.buildFourthAddingChannelPage(entityService.getChatId(update), entityService.getMessageId(update));
 
             case "Set category":
-                entityService.setChannelsAdminLink(entityService.getUser(update), update);
+                entityService.setChannelsEmptyAdminLink(entityService.getUser(update), update);
                 entityService.setUsersUsingPage(update, "Input link of admin");
                 return messageService.buildFifthAddingChannelPage(entityService.getChatId(update), entityService.getMessageId(update));
 
             case "InfoOfSelectedChannel":
-                List<Object> objects = new ArrayList<>();
-                objects.add(messageService.deleteMessageById(entityService.getChatId(update), entityService.getMessageId(update) - 2));
-                objects.add(messageService.deleteMessageById(entityService.getChatId(update), entityService.getMessageId(update) - 1));
+                if(entityService.checkChannelsPhoto1IsExist(update)){
+                    objects.add(messageService.deleteMessageById(entityService.getChatId(update), entityService.getMessageId(update) - 2));
+                }
+                if(entityService.checkChannelsPhoto2IsExist(update)){
+                    objects.add(messageService.deleteMessageById(entityService.getChatId(update), entityService.getMessageId(update) - 1));
+                }
+                entityService.setUsersMessageMenu(update, 0);
                 switch(entityService.getUser(update).getPreviousPage()){
                     case "List of crypto signals":
                         entityService.setUsersUsingPage(update, "List of crypto signals");
+                        objects.add(messageService.buildCategoryPage(update, entityService.getUser(update).getMessageMenu(), "Crypto signals"));
+                        break;
                     case "List of Airdrop/Retrodrop":
                         entityService.setUsersUsingPage(update, "List of Airdrop/Retrodrop");
+                        objects.add(messageService.buildCategoryPage(update, entityService.getUser(update).getMessageMenu(), "Airdrop/Retrodrop"));
+                        break;
                     case "List of news":
                         entityService.setUsersUsingPage(update, "List of news");
+                        objects.add(messageService.buildCategoryPage(update, entityService.getUser(update).getMessageMenu(), "News"));
+                        break;
                     default:
                         if(entityService.getUser(update).getPreviousPage().startsWith("List top channel, page:")) {
                             int page = Integer.parseInt(entityService.getUser(update).getPreviousPage().replace("List top channel, page:", ""));
                             entityService.setUsersUsingPage(update, "List top channel, page:" + page);
-                            objects.add(messageService.buildTopChannelsPage(update, entityService.getMessageId(update), page));
+                            objects.add(messageService.buildTopChannelsPage(update, entityService.getUser(update).getMessageMenu(), page));
                         }
                 }
-                entityService.setUsersUsingPage(update, entityService.getUser(update).getPreviousPage());
-                entityService.setUsersMessageMenu(update);
                 return objects;
 
             case "InfoOfSelectedUsersChannel":
                 entityService.setUsersUsingPage(update, entityService.getUser(update).getPreviousPage());
-                entityService.setUsersMessageMenu(update);
+                entityService.setUsersMessageMenu(update, 0);
                 List<Object> userChannelObjects = new ArrayList<>();
                 userChannelObjects.add(messageService.deleteMessageById(entityService.getChatId(update), entityService.getMessageId(update) - 2));
                 userChannelObjects.add(messageService.deleteMessageById(entityService.getChatId(update), entityService.getMessageId(update) - 1));
                 userChannelObjects.add(messageService.buildAccountPage(entityService.getChatId(update), entityService.getMessageId(update)));
                 return userChannelObjects;
+
+            case "Edit channel name":
+                objects.add(messageService.deleteMessage(update, entityService.getChatId(update)));
+                objects.add(messageService.buildFirstPhotoOfSelectedChannel(update));
+                objects.add(messageService.buildSecondPhotoOfSelectedChannel(update));
+                entityService.setUsersUsingPage(update, "InfoOfSelectedUsersChannel");
+                objects.add(messageService.buildInfoOfSelectedUsersChannel(update));
+                entityService.setUsersMessageMenu(update, 3);
+                return objects;
+
+            case "Edit channel link":
+                entityService.setUsersUsingPage(update, "Edit channel name");
+                return messageService.buildFirstAddingChannelPage(update, entityService.getChatId(update));
+
+            case "Edit screenshot of statistic":
+                entityService.setUsersUsingPage(update, "Edit channel link");
+                return messageService.buildSecondAddingChannelPage(entityService.getChatId(update), entityService.getMessageId(update));
+
+            case "Edit screenshot of users":
+                entityService.setUsersUsingPage(update, "Edit screenshot of statistic");
+                return messageService.buildThirdAddingChannelPage(entityService.getChatId(update), entityService.getMessageId(update));
+
+            case "Edit link of admin":
+                entityService.setUsersUsingPage(update, "Edit screenshot of users");
+                return messageService.buildFourthAddingChannelPage(entityService.getChatId(update), entityService.getMessageId(update));
+
+            case "Edit channel category":
+                entityService.setUsersUsingPage(update, "Edit link of admin");
+                return messageService.buildFifthAddingChannelPage(entityService.getChatId(update), entityService.getMessageId(update));
 
             default:
                 return entityService.getUser(update).getStatus().equals("Admin") ?

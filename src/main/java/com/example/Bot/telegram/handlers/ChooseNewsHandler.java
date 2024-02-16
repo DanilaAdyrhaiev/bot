@@ -21,16 +21,16 @@ public class ChooseNewsHandler implements ICommand {
     @Override
     public Object execute(Update update){
         entityService.setChannelCategory(entityService.getUser(update), "News");
-        entityService.setUsersUsingPage(update, "Main menu");
-        entityService.setUserSelectedChannel(entityService.getUser(update), 0L);
-        if(entityService.getUser(update).getStatus().equals("User")){
-            return messageService.buildMainUserPage(update, entityService.getChatId(update));
-        }
-        else if(entityService.getUser(update).getStatus().equals("Admin")){
-            return messageService.buildMainAdminPage(update, entityService.getChatId(update));
+        if(entityService.getUser(update).getUsingPage().equals("Edit category")){
+            entityService.setUsersUsingPage(update, "InfoOfSelectedUsersChannel");
+            return messageService.buildInfoOfSelectedUsersChannel(update);
+
         }
         else {
-            return messageService.buildMainUserPage(update, entityService.getChatId(update));
+            entityService.setUserSelectedChannel(entityService.getUser(update), 0L);
+            entityService.setUsersUsingPage(update, "Main menu");
+            entityService.setUsersMessageMenu(update, 0);
+            return messageService.buildAccountPage(entityService.getChatId(update), entityService.getMessageId(update));
         }
     }
 }

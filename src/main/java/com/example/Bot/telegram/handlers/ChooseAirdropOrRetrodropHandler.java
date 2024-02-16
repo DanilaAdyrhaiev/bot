@@ -7,6 +7,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Component
 public class ChooseAirdropOrRetrodropHandler implements ICommand {
     private final MessageService messageService;
@@ -21,16 +24,20 @@ public class ChooseAirdropOrRetrodropHandler implements ICommand {
     @Override
     public Object execute(Update update){
         entityService.setChannelCategory(entityService.getUser(update), "Airdrop/Retrodrop");
-        entityService.setUsersUsingPage(update, "Main menu");
-        entityService.setUserSelectedChannel(entityService.getUser(update), 0L);
-        if(entityService.getUser(update).getStatus().equals("User")){
-            return messageService.buildMainUserPage(update, entityService.getChatId(update));
-        }
-        else if(entityService.getUser(update).getStatus().equals("Admin")){
-            return messageService.buildMainAdminPage(update, entityService.getChatId(update));
+        if(entityService.getUser(update).getUsingPage().equals("Edit category")){
+            List<Object> objects = new ArrayList<>();
+            objects.add(messageService.deleteMessage(update, entityService.getChatId(update)));
+            objects.add(messageService.buildFirstPhotoOfSelectedChannel(update));
+            objects.add(messageService.buildSecondPhotoOfSelectedChannel(update));
+            objects.add(messageService.buildInfoOfSelectedUsersChannel(update));
+            entityService.setUsersUsingPage(update, "InfoOfSelectedUsersChannel");
+            return objects;
         }
         else {
-            return messageService.buildMainUserPage(update, entityService.getChatId(update));
+            entityService.setUserSelectedChannel(entityService.getUser(update), 0L);
+            entityService.setUsersUsingPage(update, "Main menu");
+            entityService.setUsersMessageMenu(update, 0);
+            return messageService.buildAccountPage(entityService.getChatId(update), entityService.getMessageId(update));
         }
 
     }

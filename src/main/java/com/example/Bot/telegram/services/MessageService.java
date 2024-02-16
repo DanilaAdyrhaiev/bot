@@ -32,14 +32,12 @@ public class MessageService {
         this.channelService = channelService;
     }
 
+    Map<String, String> channelPage = new LinkedHashMap<>();
     KeyboardFactory keyboardFactory = new KeyboardFactory();
     Map<String, String> startUserPage = new LinkedHashMap<>();
     Map<String, String> startAdminPage = new LinkedHashMap<>();
     Map<String, String> mainUserPage = new LinkedHashMap<>();
     Map<String, String> mainAdminPage = new LinkedHashMap<>();
-    Map<String, String> CryptoSignalsPage = new LinkedHashMap<>();
-    Map<String, String> AirdropPage = new LinkedHashMap<>();
-    Map<String, String> NewsPage = new LinkedHashMap<>();
     Map<String, String> AccountPage = new LinkedHashMap<>();
     Map<String, String> categoryPage = new LinkedHashMap<>();
     Map<String, String> chooseCategoryPage = new LinkedHashMap<>();
@@ -53,14 +51,15 @@ public class MessageService {
     Map<String, String> TopChannelsPage = new LinkedHashMap<>();
 
     public SendMessage buildStartUserPage(Long chatId){
-        startUserPage.put("Top", "/listTop:1");
-        startUserPage.put("Crypto signals", "/listCryptoSignals");
-        startUserPage.put("Airdrop/Retrodrop", "/listAirdropRetrodrop");
-        startUserPage.put("News", "/listNews");
-        startUserPage.put("Add channel", "/addChannel");
+        startUserPage.put("Channels", "/channels");
+//        startUserPage.put("Top", "/listTop:1");
+//        startUserPage.put("Crypto signals", "/listCryptoSignals");
+//        startUserPage.put("Airdrop/Retrodrop", "/listAirdropRetrodrop");
+//        startUserPage.put("News", "/listNews");
+//        startUserPage.put("Add channel", "/addChannel");
         startUserPage.put("Account", "/Account");
         SendMessage val = SendMessage.builder().
-                text("text")
+                text("Welcome to {Bot Name}")
                 .chatId(chatId)
                 .replyMarkup(keyboardFactory.getOneThreeTwoMarkup(startUserPage))
                 .build();
@@ -84,35 +83,36 @@ public class MessageService {
         return val;
     }
 
-    public SendMessage buildStartNewUserPage(Long chatId){
-        startUserPage.put("Top", "/listTop:1");
-        startUserPage.put("Crypto signals", "/listCryptoSignals");
-        startUserPage.put("Airdrop/Retrodrop", "/listAirdropRetrodrop");
-        startUserPage.put("News", "/listNews");
-        startUserPage.put("Add channel", "/addChannel");
-        startUserPage.put("Account", "/Account");
-        SendMessage val = SendMessage.builder().
-                text("text")
-                .chatId(chatId)
-                .replyMarkup(keyboardFactory.getOneThreeTwoMarkup(startUserPage))
-                .build();
-        startUserPage.clear();
-        return val;
-    }
     public EditMessageText buildMainUserPage(Update update, Long chatId){
-        mainUserPage.put("Top", "/listTop:1");
-        mainUserPage.put("Crypto signals", "/listCryptoSignals");
-        mainUserPage.put("Airdrop/Retrodrop", "/listAirdropRetrodrop");
-        mainUserPage.put("News", "/listNews");
-        mainUserPage.put("Add channel", "/addChannel");
+        mainUserPage.put("Channels", "/channels");
+//        mainUserPage.put("Top", "/listTop:1");
+//        mainUserPage.put("Crypto signals", "/listCryptoSignals");
+//        mainUserPage.put("Airdrop/Retrodrop", "/listAirdropRetrodrop");
+//        mainUserPage.put("News", "/listNews");
+//        mainUserPage.put("Add channel", "/addChannel");
         mainUserPage.put("Account", "/Account");
         EditMessageText val = EditMessageText.builder()
-                .text("text")
+                .text("Welcome to {Bot Name}")
                 .chatId(chatId)
                 .messageId(update.getCallbackQuery().getMessage().getMessageId())
                 .replyMarkup(keyboardFactory.getOneThreeTwoMarkup(mainUserPage))
                 .build();
         mainUserPage.clear();
+        return val;
+    }
+
+    public EditMessageText buildMainChannelPage(Update update){
+        channelPage.put("Top", "/listTop:1");
+        channelPage.put("Crypto signals", "/listCryptoSignals");
+        channelPage.put("Airdrop/Retrodrop", "/listAirdropRetrodrop");
+        channelPage.put("News", "/listNews");
+        channelPage.put("Back", "/Back");
+        EditMessageText val = EditMessageText.builder().text("Select a category to view")
+                .chatId(update.getCallbackQuery().getMessage().getChatId())
+                .messageId(update.getCallbackQuery().getMessage().getMessageId())
+                .replyMarkup(keyboardFactory.getMarkap(channelPage))
+                .build();
+        channelPage.clear();
         return val;
     }
 
@@ -197,10 +197,11 @@ public class MessageService {
     }
 
     public DeleteMessage deleteMessage(Update update, Long Chatid){
-        return DeleteMessage.builder()
-                .messageId(update.getMessage().getMessageId())
-                .chatId(Chatid)
-                .build();
+        return update.hasCallbackQuery()?
+                DeleteMessage.builder()
+                .messageId(update.getCallbackQuery().getMessage().getMessageId()).chatId(Chatid).build():
+                DeleteMessage.builder()
+                        .messageId(update.getMessage().getMessageId()).chatId(Chatid).build();
     }
 
     public DeleteMessage deleteMessageById(Long Chatid, int id){
@@ -218,13 +219,15 @@ public class MessageService {
         }
         if(!isEmpty){
             for(Channel channel:  channels){
-                AccountPage.put(channel.getChannelName(), "/usersChannelInfo:"+channel.getId());
+                AccountPage.put("Your channel: " +channel.getChannelName(), "/usersChannelInfo:"+channel.getId());
             }
         }
+        AccountPage.put("Add channel", "/addChannel");
         AccountPage.put("Back", "/BackToMainMenu");
         EditMessageText val = EditMessageText.builder()
                 .text("User: " + userService.getUserByChatId(chatId).getName()
-                        +"\nCoin: "+userService.getUserByChatId(chatId).getCoin())
+                        +"\nNumber of your channels: "+channels.size()
+                        +"\nChannels:")
                 .messageId(messageId)
                 .chatId(chatId)
                 .replyMarkup(keyboardFactory.getMarkap(AccountPage))
@@ -234,7 +237,7 @@ public class MessageService {
     }
 
     public EditMessageText buildCategoryPage(Update update, int messageId, String category){
-        List<Channel> list= channelService.getAllChannels();
+        List<Channel> list= channelService.getAllChannelsSortedByRate();
         List<Channel> channels = list.stream().filter(x->x.getCategory().equals(category)).collect(Collectors.toList());
         boolean isEmpty = true;
         if(!channels.isEmpty()){
@@ -245,7 +248,7 @@ public class MessageService {
                 categoryPage.put(channel.getChannelName(), "/channelInfo:"+channel.getId());
             }
         }
-        categoryPage.put("Back", "/BackToMainMenu");
+        categoryPage.put("Back", "/channels");
 
         EditMessageText val = EditMessageText.builder()
                 .text("List:")
@@ -269,24 +272,24 @@ public class MessageService {
                 TopChannelsPage.put(channels.get(i).getChannelName(), "/channelInfo:"+channels.get(i).getId());
             }
             if(!(page > 1) && !(endIndex < channels.size())){
-                TopChannelsPage.put("Back to main menu", "/BackToMainMenu");
+                TopChannelsPage.put("Back", "/channels");
             }
             else{
                 if (page > 1) {
-                    TopChannelsPage.put("<-", "/listTop"+(page-1));
+                    TopChannelsPage.put("<-", "/listTop:"+(page-1));
                 }else{
                     TopChannelsPage.put(" ", "/empty1");
                 }
                 if (endIndex < channels.size()) {
-                    TopChannelsPage.put("->", "/listTop"+(page+1));
+                    TopChannelsPage.put("->", "/listTop:"+(page+1));
                 }else{
                     TopChannelsPage.put("  ", "/empty2");
                 }
-                TopChannelsPage.put("Back to main menu", "/BackToMainMenu");
+                TopChannelsPage.put("Back", "/channels");
             }
         } else{
             text = "Sorry, the channels have not been added";
-            TopChannelsPage.put("Back to main menu", "/BackToMainMenu");
+            TopChannelsPage.put("Back", "/channels");
         }
 
 

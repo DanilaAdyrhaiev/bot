@@ -14,6 +14,7 @@ public interface ChannelRepository extends CrudRepository<Channel, Long> {
     List<Channel> findByUser(User user);
     List<Channel> findByCategory(String category);
 
+    List<Channel> findAllByCategoryIsNotNullOrderByRateDesc();
     List<Channel> findAllByOrderByRateDesc();
 
 }

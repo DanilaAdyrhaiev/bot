@@ -23,11 +23,12 @@ public class ChannelInfoHandler implements ICommand {
 
     @Override
     public Object execute(Update update){
-        entityService.setUserSelectedChannel(entityService.getUser(new Update()),
+        entityService.setUserSelectedChannel(entityService.getUser(update),
                 Long.parseLong(update.getCallbackQuery().getData().replace("/channelInfo:", "")));
         entityService.setUsersUsingPage(update, "InfoOfSelectedChannel");
+        entityService.setUsersMessageMenu(update, 3);
         List<Object> objects = new ArrayList<>();
-        objects.add(messageService.deleteMessageById(entityService.getChatId(update), entityService.getUser(update).getMessageMenu()));
+        objects.add(messageService.deleteMessageById(entityService.getChatId(update), update.getCallbackQuery().getMessage().getMessageId()));
         objects.add(messageService.buildFirstPhotoOfSelectedChannel(update));
         objects.add(messageService.buildSecondPhotoOfSelectedChannel(update));
         objects.add(messageService.buildInfoOfSelectedChannel(update));

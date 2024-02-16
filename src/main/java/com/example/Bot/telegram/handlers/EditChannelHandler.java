@@ -1,6 +1,5 @@
 package com.example.Bot.telegram.handlers;
 
-import com.example.Bot.services.ChannelService;
 import com.example.Bot.services.EntityService;
 import com.example.Bot.telegram.interfaces.ICommand;
 import com.example.Bot.telegram.services.MessageService;
@@ -12,20 +11,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Component
-public class DeleteChannelHandler implements ICommand {
+public class EditChannelHandler implements ICommand {
     private final MessageService messageService;
     private final EntityService entityService;
-    private final ChannelService channelService;
 
     @Autowired
-    public DeleteChannelHandler(MessageService messageService, EntityService entityService, ChannelService channelService) {
+    public EditChannelHandler(MessageService messageService, EntityService entityService) {
         this.messageService = messageService;
         this.entityService = entityService;
-        this.channelService = channelService;
     }
 
     @Override
-    public Object execute(Update update){
+    public Object execute(Update update) {
         List<Object> objects = new ArrayList<>();
         if(entityService.checkChannelsPhoto1IsExist(update)){
             objects.add(messageService.deleteMessageById(entityService.getChatId(update), entityService.getMessageId(update) - 2));
@@ -33,9 +30,8 @@ public class DeleteChannelHandler implements ICommand {
         if(entityService.checkChannelsPhoto2IsExist(update)){
             objects.add(messageService.deleteMessageById(entityService.getChatId(update), entityService.getMessageId(update) - 1));
         }
-        channelService.deleteChannel(entityService.getUser(update).getSelectedChannel());
-        objects.add(messageService.buildAccountPage(entityService.getChatId(update), entityService.getMessageId(update)));
-        entityService.setUsersMessageMenu(update, 0);
+        entityService.setUsersUsingPage(update, "Edit channel name");
+        objects.add(messageService.buildFirstAddingChannelPage(update, entityService.getChatId(update)));
         return objects;
     }
 }

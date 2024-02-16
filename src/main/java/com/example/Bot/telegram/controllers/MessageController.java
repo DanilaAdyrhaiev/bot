@@ -4,10 +4,12 @@ package com.example.Bot.telegram.controllers;
 import com.example.Bot.entities.Channel;
 import com.example.Bot.entities.User;
 import com.example.Bot.services.ChannelService;
+import com.example.Bot.services.EntityService;
 import com.example.Bot.services.NotebookService;
 import com.example.Bot.services.UserService;
 import com.example.Bot.telegram.services.MessageService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Controller;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
@@ -22,12 +24,14 @@ public class MessageController {
     private final ChannelService channelService;
     private final NotebookService notebookService;
 
+    private final EntityService entityService;
     @Autowired
-    public MessageController(MessageService messageService, UserService userService, ChannelService channelService, NotebookService notebookService) {
+    public MessageController(MessageService messageService, UserService userService, ChannelService channelService, NotebookService notebookService, EntityService entityService) {
         this.messageService = messageService;
         this.userService = userService;
         this.channelService = channelService;
         this.notebookService = notebookService;
+        this.entityService = entityService;
     }
 
     public Object messageProcessing(Update update){
@@ -37,12 +41,11 @@ public class MessageController {
                     return buildStartPage(update);
                 default:
                     List<Object> objects = null;
-                    Channel channel = null;
                     switch (getUsersUsingPage(update)){
                         case "Input channel name":
-                            setChannelName(update);
-                            setDirectory(update);
-                            setUsingPage(update, "Input channel link");
+                            entityService.setChannelName(update);
+                            entityService.setChannelDirectory(update);
+                            entityService.setUsersUsingPage(update, "Input channel link");
                             new File(getSelectedChannel(update)
                                     .getDirectoryLink())
                                     .mkdir();
@@ -52,20 +55,41 @@ public class MessageController {
                                     getUsersMessageMenu(update)));
                             return objects;
                         case "Input channel link":
-                            channel = getSelectedChannel(update);
-                            channel.setLink(update.getMessage().getText());
-                            channelService.update(channel);
-                            setUsingPage(update, "Input screenshot of statistic");
+                            entityService.setChannelsLink(update);
+                            entityService.setUsersUsingPage(update, "Input screenshot of statistic");
                             objects = new ArrayList<>();
                             objects.add(messageService.deleteMessage(update, getChatId(update)));
                             objects.add(messageService.buildThirdAddingChannelPage(getChatId(update),
                                     getUsersMessageMenu(update)));
                             return objects;
                         case "Input link of admin":
-                            channel = getSelectedChannel(update);
-                            channel.setLinkOnAdmin(update.getMessage().getText());
-                            channelService.update(channel);
-                            setUsingPage(update,"Set category");
+                            entityService.setChannelsAdminLink(update);
+                            entityService.setUsersUsingPage(update,"Set category");
+                            objects = new ArrayList<>();
+                            objects.add(messageService.deleteMessage(update, getChatId(update)));
+                            objects.add(messageService.buildSixthAddingChannelPage(getChatId(update),
+                                    getUsersMessageMenu(update)));
+                            return objects;
+                        case "Edit channel name":
+                            entityService.editChannelName(update);
+                            editFiles(update);
+                            entityService.setUsersUsingPage(update, "Edit channel link");
+                            objects = new ArrayList<>();
+                            objects.add(messageService.deleteMessage(update, getChatId(update)));
+                            objects.add(messageService.buildSecondAddingChannelPage(getChatId(update),
+                                    getUsersMessageMenu(update)));
+                            return objects;
+                        case "Edit channel link":
+                            entityService.setChannelsLink(update);
+                            entityService.setUsersUsingPage(update, "Edit screenshot of statistic");
+                            objects = new ArrayList<>();
+                            objects.add(messageService.deleteMessage(update, getChatId(update)));
+                            objects.add(messageService.buildThirdAddingChannelPage(getChatId(update),
+                                    getUsersMessageMenu(update)));
+                            return objects;
+                        case "Edit link of admin":
+                            entityService.setChannelsAdminLink(update);
+                            entityService.setUsersUsingPage(update,"Edit category");
                             objects = new ArrayList<>();
                             objects.add(messageService.deleteMessage(update, getChatId(update)));
                             objects.add(messageService.buildSixthAddingChannelPage(getChatId(update),
@@ -85,19 +109,33 @@ public class MessageController {
             List<Object> objects = new ArrayList<>();
             switch (getUsersUsingPage(update)){
                 case "Input screenshot of statistic":
-                    channel = getSelectedChannel(update);
-                    channel.setLinkOnScreenshot1(channel.getDirectoryLink()+"/statistic.png");
-                    channelService.update(channel);
-                    setUsingPage(update, "Input screenshot of users");
+                    entityService.setChannelsLinkOnScreenshot1(update);
+                    entityService.setUsersUsingPage(update, "Input screenshot of users");
                     objects.add(messageService.deleteMessage(update, getChatId(update)));
                     objects.add(messageService.buildFourthAddingChannelPage(getChatId(update),
                             getUsersMessageMenu(update)));
                     return objects;
                 case "Input screenshot of users":
+                    entityService.setChannelsLinkOnScreenshot2(update);
+                    entityService.setUsersUsingPage(update, "Input link of admin");
+                    objects.add(messageService.deleteMessage(update, getChatId(update)));
+                    objects.add(messageService.buildFifthAddingChannelPage(getChatId(update),
+                            getUsersMessageMenu(update)));
+                    return objects;
+                case "Edit screenshot of statistic":
+                    channel = getSelectedChannel(update);
+                    channel.setLinkOnScreenshot1(channel.getDirectoryLink()+"/statistic.png");
+                    channelService.update(channel);
+                    entityService.setUsersUsingPage(update, "Edit screenshot of users");
+                    objects.add(messageService.deleteMessage(update, getChatId(update)));
+                    objects.add(messageService.buildFourthAddingChannelPage(getChatId(update),
+                            getUsersMessageMenu(update)));
+                    return objects;
+                case "Edit screenshot of users":
                     channel = getSelectedChannel(update);
                     channel.setLinkOnScreenshot2(channel.getDirectoryLink()+"/users.png");
                     channelService.update(channel);
-                    setUsingPage(update, "Input link of admin");
+                    entityService.setUsersUsingPage(update, "Edit link of admin");
                     objects.add(messageService.deleteMessage(update, getChatId(update)));
                     objects.add(messageService.buildFifthAddingChannelPage(getChatId(update),
                             getUsersMessageMenu(update)));
@@ -107,48 +145,35 @@ public class MessageController {
         return buildStartPage(update);
     }
 
+    @Async
+    public void editFiles(Update update){
+        File dir = new File(entityService.getChannelByUser(update).getDirectoryLink());
+        entityService.setChannelDirectory(update);
+        dir.renameTo(new File(entityService.getChannelByUser(update).getDirectoryLink()));
+        entityService.setChannelsLinkOnScreenshot1(update);
+        entityService.setChannelsLinkOnScreenshot2(update);
+    }
+
     private Object buildStartPage(Update update){
-        if(getUser(update) == null){
-            createUser(update);
-            User user = getUser(update);
-            user.setMessageMenu(getMessageId(update)+1);
-            userService.update(user);
-            setUsingPage(update, "Main menu");
+        if(entityService.getUser(update) == null){
+            entityService.createUser(update);
+            entityService.setUsersMessageMenu(update, 1);
+            entityService.setUsersUsingPage(update, "Main menu");
             return messageService.buildStartUserPage(getChatId(update));
         }
         else{
-            User user = null;
             switch (getUser(update).getStatus()){
                 case "User":
-                    user = getUser(update);
-                    user.setMessageMenu(getMessageId(update)+1);
-                    userService.update(user);
-                    setUsingPage(update, "Main menu");
+                    entityService.setUsersMessageMenu(update, 1);
+                    entityService.setUsersUsingPage(update, "Main menu");
                     return messageService.buildStartUserPage(getChatId(update));
                 case "Admin":
-                    user = getUser(update);
-                    user.setMessageMenu(getMessageId(update)+1);
-                    userService.update(user);
-                    setUsingPage(update, "Main menu");
+                    entityService.setUsersMessageMenu(update, 1);
+                    entityService.setUsersUsingPage(update, "Main menu");
                     return messageService.buildStartAdminPage(getChatId(update));
                 default:
                     return messageService.buildStartUserPage(getChatId(update));
             }
-        }
-    }
-
-    private void setUsingPage(Update update, String usingPage){
-        if(!getUser(update).getUsingPage().isEmpty()){
-            User user = getUser(update);
-            user.setPreviousPage(getUser(update).getUsingPage());
-            user.setUsingPage(usingPage);
-            userService.update(user);
-        }
-        else{
-            User user = getUser(update);
-            user.setPreviousPage("");
-            user.setUsingPage(usingPage);
-            userService.update(user);
         }
     }
 
@@ -176,43 +201,4 @@ public class MessageController {
         return update.getMessage().getMessageId();
     }
 
-    private void createUser(Update update){
-        User user;
-        if(update.getMessage().getFrom().getLastName() != null){
-            String name = update.getMessage().getFrom().getFirstName() + " " + update.getMessage().getFrom().getLastName();
-            user = new User(name, getChatId(update), "User");
-        }
-        else{
-            String name = update.getMessage().getFrom().getFirstName();
-            user = new User(name, getChatId(update), "User");
-        }
-        userService.saveUser(user);
-        user = userService.getUserByChatId(getChatId(update));
-        user.setMessageMenu(update.getMessage().getMessageId()+1);
-        user.setUsingPage("MainMenu");
-        userService.update(user);
-    }
-
-    private void setDirectory(Update update){
-        Channel channel = channelService.getChannelById(getUser(update).getSelectedChannel());
-        String dir =channel.getChannelName()+"-"+getUser(update).getChatId()+"-Directory";
-        channel.setDirectoryLink("src/main/resources/channels/"+dir);
-        channelService.update(channel);
-    }
-
-    private void setChannelName(Update update){
-        User user = userService.getUserByChatId(getChatId(update));
-        Channel channel = channelService.saveChannel(new Channel(user));
-        user.setSelectedChannel(channel.getId());
-        user = userService.update(user);
-        channel = channelService.getChannelById(user.getSelectedChannel());
-        channel.setChannelName(update.getMessage().getText());
-        channelService.update(channel);
-    }
-
-    private void setChannelCategory(User user, String category){
-        Channel channel = channelService.getChannelById(user.getSelectedChannel());
-        channel.setCategory(category);
-        channelService.update(channel);
-    }
 }

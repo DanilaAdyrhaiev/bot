@@ -22,6 +22,7 @@ public class BackToMainMenuHandler implements ICommand {
     public Object execute(Update update){
         entityService.setUserSelectedChannel(entityService.getUser(update), 0L);
         entityService.setUsersUsingPage(update, "Main menu");
+        entityService.setUsersMessageMenu(update, 0);
         return entityService.getUser(update).getStatus().equals("Admin")?
                 messageService.buildMainAdminPage(update, entityService.getChatId(update)):
                 messageService.buildMainUserPage(update, entityService.getChatId(update));
