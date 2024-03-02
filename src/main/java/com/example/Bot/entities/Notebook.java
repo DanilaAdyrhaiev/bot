@@ -20,10 +20,16 @@ public class Notebook {
     private User user;
 
     @NonNull
-    @Column(name = "coins_quantity", nullable = false)
-    private int coinsQuantity;
+    @ManyToOne
+    @JoinColumn(name = "channels_id", nullable = false)
+    private Channel channel;
 
-    @NonNull
-    @Column(name = "success", nullable = false)
-    private boolean success;
+    @Column(name = "paymentCode")
+    private String paymentCode;
+
+    @Column(name = "status")
+    private String status;
+
+    @Column(name = "category")
+    private String category;
 }

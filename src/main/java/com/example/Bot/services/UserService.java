@@ -29,6 +29,10 @@ public class UserService {
     public User getUserById(Long id) {
         return userRepository.findById(id).orElse(null);
     }
+    public List<User> getUserByStatus(String status) {
+        return userRepository.findByStatus(status);
+    }
+
 
     public User getUserByChatId(Long chatId){return userRepository.findByChatId(chatId);}
 

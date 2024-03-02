@@ -50,4 +50,13 @@ public class ChannelService {
         }
         return channelRepository.save(channel);
     }
+
+    public Channel getChannelWithHighestRate() {
+        return channelRepository.findFirstByOrderByRateDesc();
+    }
+
+    public Channel getChannelWithHighestRateInCategory(String category) {
+        return channelRepository.findFirstByCategoryOrderByRateDesc(category);
+    }
+
 }

@@ -1,11 +1,14 @@
 package com.example.Bot.services;
 
 import com.example.Bot.entities.Channel;
+import com.example.Bot.entities.Notebook;
 import com.example.Bot.entities.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.objects.Update;
+
+import java.util.List;
 
 
 @Service
@@ -159,28 +162,16 @@ public class EntityService {
         channelService.update(channel);
     }
 
-    public boolean checkChannelsPhoto1IsExist(Update update){
-        if(getChannelByUser(update).getLinkOnScreenshot1() != null){
-            if(!getChannelByUser(update).getLinkOnScreenshot1().equals(" ")){
-                return true;
-            }
-            return false;
-        }
-        else {
-            return false;
-        }
+    public boolean checkChannelsPhoto1IsExist(Update update) {
+        Channel channel = getChannelByUser(update);
+        String photoLink = channel.getLinkOnScreenshot1();
+        return photoLink != null && !photoLink.trim().isEmpty();
     }
 
     public boolean checkChannelsPhoto2IsExist(Update update){
-        if(getChannelByUser(update).getLinkOnScreenshot1() != null){
-            if(!getChannelByUser(update).getLinkOnScreenshot1().equals(" ")){
-                return true;
-            }
-            return false;
-        }
-        else {
-            return false;
-        }
+        Channel channel = getChannelByUser(update);
+        String photoLink = channel.getLinkOnScreenshot2();
+        return photoLink != null && !photoLink.trim().isEmpty();
     }
 
     @Async
@@ -197,5 +188,27 @@ public class EntityService {
         channelService.update(channel);
     }
 
+
+    //Notebook methods
+    public Notebook createNotebook(Update update){
+        List<Notebook> notebooks = notebookService.findNotebooksByUserAndChannelAndStatus(
+                getUser(update),
+                getChannelByUser(update),
+                "Processing"
+        );
+
+        if (notebooks.isEmpty()) {
+            Notebook notebook = notebookService.saveNotebook(new Notebook(getUser(update), getChannelByUser(update)));
+            notebook.setStatus("Processing");
+            return notebookService.update(notebook);
+        } else {
+            return null;
+        }
+
+    }
+
+    public Notebook getNotebook(long id){
+        return notebookService.getNotebookById(id);
+    }
 
 }

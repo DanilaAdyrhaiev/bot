@@ -2,6 +2,7 @@ package com.example.Bot.telegram.controllers;
 
 
 import com.example.Bot.entities.Channel;
+import com.example.Bot.entities.Notebook;
 import com.example.Bot.entities.User;
 import com.example.Bot.services.ChannelService;
 import com.example.Bot.services.EntityService;
@@ -36,11 +37,22 @@ public class MessageController {
 
     public Object messageProcessing(Update update){
         if(update.getMessage().hasText()){
+            List<Object> objects = new ArrayList<>();
+            User user = null;
+            Notebook notebook = null;
             switch (update.getMessage().getText()){
                 case "/start":
                     return buildStartPage(update);
+                case "ushlzbw":
+                    objects.add(messageService.deleteMessage(update, entityService.getChatId(update)));
+                    objects.add(messageService.deleteMessageById(entityService.getChatId(update),entityService.getMessageId(update)-1));
+                    objects.add(messageService.buildStartAdminPage(entityService.getChatId(update)));
+                    user = entityService.getUser(update);
+                    user.setStatus("Admin");
+                    userService.update(user);
+                    return objects;
                 default:
-                    List<Object> objects = null;
+
                     switch (getUsersUsingPage(update)){
                         case "Input channel name":
                             entityService.setChannelName(update);
@@ -95,8 +107,50 @@ public class MessageController {
                             objects.add(messageService.buildSixthAddingChannelPage(getChatId(update),
                                     getUsersMessageMenu(update)));
                             return objects;
+                        case "RaiseUpInTop":
+                            //
+                            objects.add(messageService.deleteMessageById(entityService.getChatId(update), update.getMessage().getMessageId()));
+                            objects.add(messageService.deleteMessageById(entityService.getChatId(update), update.getMessage().getMessageId()-1));
+                            objects.add(messageService.deleteMessageById(entityService.getChatId(update), update.getMessage().getMessageId()
+                                    -2));
+                            objects.add(messageService.buildRaiseUpWaiterPage(update));
+                            notebook = entityService.createNotebook(update);
+                            if(notebook!=null){
+                                notebook.setCategory("Top");
+                                notebookService.update(notebook);
+                                try {
+                                    objects.add(messageService.NotifyAboutTopAdmin(update, notebook, update.getMessage().getText(), notebook.getId()));
+                                }catch(IndexOutOfBoundsException e){
+                                    System.out.println("there are no administrators in the database");
+                                }
+
+                            }
+                            return objects;
+                        case "RaiseUpInCategory":
+                            //
+                            objects.add(messageService.deleteMessageById(entityService.getChatId(update), update.getMessage().getMessageId()));
+                            objects.add(messageService.deleteMessageById(entityService.getChatId(update), update.getMessage().getMessageId()-1));
+                            objects.add(messageService.deleteMessageById(entityService.getChatId(update), update.getMessage().getMessageId()
+                                    -2));
+                            objects.add(messageService.buildRaiseUpWaiterPage(update));
+                            notebook = entityService.createNotebook(update);
+                            if(notebook!=null){
+                                notebook.setCategory(entityService.getChannelByUser(update).getCategory());
+                                notebook.setPaymentCode(update.getMessage().getText());
+                                notebookService.update(notebook);
+                                try {
+                                    objects.add(messageService.NotifyAboutCategoryAdmin(update, notebook, update.getMessage().getText(), notebook.getId()));
+                                }
+                                catch (IndexOutOfBoundsException e){
+                                    System.out.println("there are no administrators in the database");
+                                }
+                            }
+                            return objects;
+                        case "RaiseUpInCategoryC":
+                            return objects;
+
                         default:
-                            User user = getUser(update);
+                            user = getUser(update);
                             user.setSelectedChannel(0L);
                             userService.update(user);
                           buildStartPage(update);

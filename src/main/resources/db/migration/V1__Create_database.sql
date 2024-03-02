@@ -26,6 +26,8 @@ CREATE TABLE channels (
 CREATE TABLE notebook (
     id serial PRIMARY KEY,
     user_id BIGINT NOT NULL REFERENCES users(id),
-    coins_quantity INT NOT NULL,
-    success BOOLEAN NOT NULL
+    channels_id BIGINT NOT NULL channels(id),
+    paymentCode varchar(255),
+    status BOOLEAN NOT NULL,
+    category VARCHAR(255)
 );

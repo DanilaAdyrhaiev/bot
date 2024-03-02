@@ -24,6 +24,7 @@ public class EditChannelHandler implements ICommand {
     @Override
     public Object execute(Update update) {
         List<Object> objects = new ArrayList<>();
+        entityService.setUsersMessageMenu(update, 0);
         if(entityService.checkChannelsPhoto1IsExist(update)){
             objects.add(messageService.deleteMessageById(entityService.getChatId(update), entityService.getMessageId(update) - 2));
         }

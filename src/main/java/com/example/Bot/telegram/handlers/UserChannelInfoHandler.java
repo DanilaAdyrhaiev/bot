@@ -27,10 +27,13 @@ public class UserChannelInfoHandler implements ICommand {
                 Long.parseLong(update.getCallbackQuery().getData().replace("/usersChannelInfo:", "")));
         entityService.setUsersUsingPage(update, "InfoOfSelectedUsersChannel");
         List<Object> objects = new ArrayList<>();
-
         objects.add(messageService.deleteMessageById(entityService.getChatId(update), entityService.getUser(update).getMessageMenu()));
-        objects.add(messageService.buildFirstPhotoOfSelectedChannel(update));
-        objects.add(messageService.buildSecondPhotoOfSelectedChannel(update));
+        if(entityService.checkChannelsPhoto1IsExist(update)){
+            objects.add(messageService.buildFirstPhotoOfSelectedChannel(update));
+        }
+        if(entityService.checkChannelsPhoto2IsExist(update)){
+            objects.add(messageService.buildSecondPhotoOfSelectedChannel(update));
+        }
         objects.add(messageService.buildInfoOfSelectedUsersChannel(update));
         entityService.setUsersMessageMenu(update, 3);
         return objects;

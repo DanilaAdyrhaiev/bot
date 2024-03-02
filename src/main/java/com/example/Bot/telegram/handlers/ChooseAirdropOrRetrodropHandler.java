@@ -26,16 +26,17 @@ public class ChooseAirdropOrRetrodropHandler implements ICommand {
         entityService.setChannelCategory(entityService.getUser(update), "Airdrop/Retrodrop");
         if(entityService.getUser(update).getUsingPage().equals("Edit category")){
             List<Object> objects = new ArrayList<>();
+            entityService.setUsersUsingPage(update, "InfoOfSelectedUsersChannel");
+            entityService.setUsersMessageMenu(update, 0);
             objects.add(messageService.deleteMessage(update, entityService.getChatId(update)));
             objects.add(messageService.buildFirstPhotoOfSelectedChannel(update));
             objects.add(messageService.buildSecondPhotoOfSelectedChannel(update));
             objects.add(messageService.buildInfoOfSelectedUsersChannel(update));
-            entityService.setUsersUsingPage(update, "InfoOfSelectedUsersChannel");
             return objects;
         }
         else {
             entityService.setUserSelectedChannel(entityService.getUser(update), 0L);
-            entityService.setUsersUsingPage(update, "Main menu");
+            entityService.setUsersUsingPage(update, "Account");
             entityService.setUsersMessageMenu(update, 0);
             return messageService.buildAccountPage(entityService.getChatId(update), entityService.getMessageId(update));
         }

@@ -1,10 +1,13 @@
 package com.example.Bot.telegram.services;
 
 import com.example.Bot.entities.Channel;
+import com.example.Bot.entities.Notebook;
 import com.example.Bot.entities.User;
 import com.example.Bot.services.ChannelService;
+import com.example.Bot.services.NotebookService;
 import com.example.Bot.services.UserService;
 import com.example.Bot.telegram.factories.KeyboardFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
@@ -13,7 +16,6 @@ import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageTe
 import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
-import javax.xml.bind.helpers.AbstractUnmarshallerImpl;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -26,10 +28,13 @@ import java.util.stream.Collectors;
 public class MessageService {
     private final UserService userService;
     private final ChannelService channelService;
+    private final NotebookService notebookService;
 
-    public MessageService(UserService userService, ChannelService channelService) {
+    @Autowired
+    public MessageService(UserService userService, ChannelService channelService, NotebookService notebookService) {
         this.userService = userService;
         this.channelService = channelService;
+        this.notebookService = notebookService;
     }
 
     Map<String, String> channelPage = new LinkedHashMap<>();
@@ -49,6 +54,10 @@ public class MessageService {
     Map<String, String> SelectedChannelPage = new LinkedHashMap<>();
     Map<String, String> SelectedUsersChannelPage = new LinkedHashMap<>();
     Map<String, String> TopChannelsPage = new LinkedHashMap<>();
+    Map<String, String> RaiseUpChannel = new LinkedHashMap<>();
+    Map<String, String> Confirm = new LinkedHashMap<>();
+    Map<String, String> Requests = new LinkedHashMap<>();
+    Map<String, String> NotifyUser = new LinkedHashMap<>();
 
     public SendMessage buildStartUserPage(Long chatId){
         startUserPage.put("Channels", "/channels");
@@ -68,16 +77,12 @@ public class MessageService {
     }
 
     public SendMessage buildStartAdminPage(Long chatId){
-        startUserPage.put("Top", "/listTop:1");
-        startAdminPage.put("Crypto signals", "/listCryptoSignals");
-        startAdminPage.put("Airdrop/Retrodrop", "/listAirdropRetrodrop");
-        startAdminPage.put("News", "/listNews");
-        startAdminPage.put("Add channel", "/addChannel");
+        startAdminPage.put("Channels", "/channels");
         startAdminPage.put("Requests", "/requests");
         SendMessage val = SendMessage.builder().
                 text("text")
                 .chatId(chatId)
-                .replyMarkup(keyboardFactory.getOneThreeTwoMarkup(startAdminPage))
+                .replyMarkup(keyboardFactory.getMarkap(startAdminPage))
                 .build();
         startAdminPage.clear();
         return val;
@@ -117,17 +122,15 @@ public class MessageService {
     }
 
     public EditMessageText buildMainAdminPage(Update update, Long chatId){
-        mainAdminPage.put("Crypto signals", "/listCryptoSignals");
-        mainAdminPage.put("Airdrop/Retrodrop", "/listAirdropRetrodrop");
-        mainAdminPage.put("News", "/listNews");
-        mainAdminPage.put("Add channel", "/addChannel");
+        mainAdminPage.put("Channels", "/channels");
         mainAdminPage.put("Requests", "/requests");
-        EditMessageText val = EditMessageText.builder()
-                .text("text")
-                .chatId(chatId)
-                .messageId(update.getCallbackQuery().getMessage().getMessageId())
-                .replyMarkup(keyboardFactory.getOneThreeTwoMarkup(mainAdminPage))
-                .build();
+        EditMessageText val = update.hasCallbackQuery()?
+                EditMessageText.builder().text("text").chatId(chatId)
+                        .messageId(update.getCallbackQuery().getMessage().getMessageId())
+                        .replyMarkup(keyboardFactory.getMarkap(mainAdminPage)).build():
+                EditMessageText.builder().text("text").chatId(chatId)
+                        .messageId(update.getMessage().getMessageId())
+                        .replyMarkup(keyboardFactory.getMarkap(mainAdminPage)).build();
         mainAdminPage.clear();
         return val;
     }
@@ -261,37 +264,35 @@ public class MessageService {
         return val;
     }
 
-    public EditMessageText buildTopChannelsPage(Update update, int messageId, int page){
+    public EditMessageText buildTopChannelsPage(Update update, int messageId, int page) {
         List<Channel> channels = channelService.getAllChannelsSortedByRate();
         String text;
-        if(!channels.isEmpty()){
+        if (!channels.isEmpty()) {
             text = "List of channels:";
-            int startIndex = (page - 1) * 1;
-            int endIndex = Math.min(startIndex + 1, channels.size());
-            for(int i = startIndex; i < endIndex; i++){
-                TopChannelsPage.put(channels.get(i).getChannelName(), "/channelInfo:"+channels.get(i).getId());
+            int startIndex = (page - 1) * 7;
+            int endIndex = Math.min(startIndex + 7, channels.size());
+            for (int i = startIndex; i < endIndex; i++) {
+                TopChannelsPage.put(channels.get(i).getChannelName(), "/channelInfo:" + channels.get(i).getId());
             }
-            if(!(page > 1) && !(endIndex < channels.size())){
+            if (!(page > 1) && !(endIndex < channels.size())) {
                 TopChannelsPage.put("Back", "/channels");
-            }
-            else{
+            } else {
                 if (page > 1) {
-                    TopChannelsPage.put("<-", "/listTop:"+(page-1));
-                }else{
+                    TopChannelsPage.put("<-", "/listTop:" + (page - 1));
+                } else {
                     TopChannelsPage.put(" ", "/empty1");
                 }
                 if (endIndex < channels.size()) {
-                    TopChannelsPage.put("->", "/listTop:"+(page+1));
-                }else{
+                    TopChannelsPage.put("->", "/listTop:" + (page + 1));
+                } else {
                     TopChannelsPage.put("  ", "/empty2");
                 }
                 TopChannelsPage.put("Back", "/channels");
             }
-        } else{
+        } else {
             text = "Sorry, the channels have not been added";
             TopChannelsPage.put("Back", "/channels");
         }
-
 
         EditMessageText val = EditMessageText.builder()
                 .text(text)
@@ -373,6 +374,10 @@ public class MessageService {
                         + channelService.getChannelById(userService.getUserByChatId(id).getSelectedChannel()).getLinkOnAdmin();
             }
         }
+        if(channelService.getChannelById(userService.getUserByChatId(id).getSelectedChannel()).getCategory() != null){
+            SelectedUsersChannelPage.put("Raise to the top", "/raiseUpInTop");
+            SelectedUsersChannelPage.put("Raise to the top in category", "/raiseUpInCategory");
+        }
         SelectedUsersChannelPage.put("Edit channel", "/editChannel:"+getUser(update).getSelectedChannel());
         SelectedUsersChannelPage.put("Delete channel", "/deleteChannel:"+getUser(update).getSelectedChannel());
         SelectedUsersChannelPage.put("Back", "/Back");
@@ -385,6 +390,117 @@ public class MessageService {
         return val;
     }
 
+    public SendPhoto buildQrCodePage(Update update){
+        Long id = update.getCallbackQuery().getMessage().getChatId();
+        File photoFile1 = new File("src/main/resources/QR-Code/code.png");
+        FileInputStream photo1 = null;
+        try {
+            photo1 = new FileInputStream(photoFile1);
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+        SendPhoto val = SendPhoto.builder()
+                .chatId(update.getCallbackQuery().getMessage().getChatId())
+                .photo(new InputFile(photo1, "code.png"))
+                .build();
+        return val;
+    }
+
+    public SendMessage buildRaiseUpPage(Update update){
+        RaiseUpChannel.put("Back", "/Back");
+        SendMessage val = SendMessage.builder()
+                .text("To raise the account to the top, you must pay: x-money by qr-code.\n" +
+                        "After payment, send the payment code here.")
+                .chatId(update.getCallbackQuery().getMessage().getChatId())
+                .replyMarkup(keyboardFactory.getMarkap(RaiseUpChannel))
+                .build();
+        RaiseUpChannel.clear();
+        return val;
+    }
+
+    public SendMessage buildRaiseUpWaiterPage(Update update){
+        RaiseUpChannel.put("Back to channel", "/Back");
+        SendMessage val = SendMessage.builder()
+                .text("The administrator will check the payment and confirm the promotion to the top if everything goes well")
+                .chatId(update.getMessage().getChatId())
+                .replyMarkup(keyboardFactory.getMarkap(RaiseUpChannel))
+                .build();
+        RaiseUpChannel.clear();
+        return val;
+    }
+
+    public SendMessage NotifyAboutTopAdmin(Update update, Notebook notebook, String code, Long id){
+        Confirm.put("Confirm", "/confirmTop:"+id);
+        Confirm.put("Decline", "/decline:"+id);
+        User user = userService.getUserByStatus("Admin").get(0);
+        SendMessage val = SendMessage.builder()
+                .text("User: "+notebook.getUser().getName()+"\n" +
+                        "Channel: "+notebook.getChannel().getChannelName()+"\n"+
+                        "Code: " + code)
+                .chatId(user.getChatId())
+                .replyMarkup(keyboardFactory.getMarkap(Confirm))
+                .build();
+        Confirm.clear();
+        return val;
+    }
+
+    public SendMessage NotifyAboutCategoryAdmin(Update update, Notebook notebook, String code, Long id){
+        Confirm.put("Confirm", "/confirmCategory:"+id);
+        Confirm.put("Decline", "/decline:"+id);
+        User user = userService.getUserByStatus("Admin").get(0);
+        SendMessage val = SendMessage.builder()
+                .text("User: "+notebook.getUser().getName()+"\n" +
+                        "Channel"+notebook.getChannel().getChannelName()+
+                        "Code" + code)
+                .chatId(user.getChatId())
+                .replyMarkup(keyboardFactory.getMarkap(Confirm))
+                .build();
+        Confirm.clear();
+        return val;
+    }
+
+    public SendMessage buildRequestsPage(Update update){
+        List<Notebook> notebooks = notebookService.findByStatus("Processing");
+        for(Notebook val : notebooks){
+            Requests.put(val.getChannel().getChannelName(), "/request:"+val.getId());
+        }
+        Requests.put("Back", "/Back");
+        SendMessage val = SendMessage.builder().text("All request in processing")
+                .chatId(update.getCallbackQuery().getMessage().getChatId())
+                .replyMarkup(keyboardFactory.getMarkap(Requests))
+                .build();
+        Requests.clear();
+        return val;
+    }
+
+    public EditMessageText selectedRequestPage(Update update, Notebook notebook){
+        Confirm.put("Confirm", "/confirmTop:"+notebook.getId());
+        Confirm.put("Decline", "/decline:"+notebook.getId());
+        Confirm.put("Back", "/Back");
+        User user = userService.getUserByStatus("Admin").get(0);
+        EditMessageText val = EditMessageText.builder()
+                .text("User: "+notebook.getUser().getName()+"\n" +
+                        "Channel: "+notebook.getChannel().getChannelName()+"\n"+
+                        "Code: " + notebook.getPaymentCode())
+                .chatId(user.getChatId())
+                .messageId(update.getCallbackQuery().getMessage().getMessageId())
+                .replyMarkup(keyboardFactory.getMarkap(Confirm))
+                .build();
+        Confirm.clear();
+        return val;
+    }
+
+    public SendMessage NotifyUserAboutChannelsRaiseUp(Update update, Notebook notebook, String text){
+        NotifyUser.put("Ok", "/ok");
+        SendMessage val = SendMessage.builder()
+                .text(text)
+                .chatId(notebook.getUser().getChatId())
+                .replyMarkup(keyboardFactory.getMarkap(NotifyUser))
+                .build();
+        NotifyUser.clear();
+        return val;
+    }
+
     private Long getChatId(Update update){
         return update.getCallbackQuery().getMessage().getChatId();
     }
@@ -393,19 +509,5 @@ public class MessageService {
         return userService.getUserByChatId(getChatId(update));
     }
 
-    public void setUsingPage(Update update, String usingPage){
-        if(!getUser(update).getUsingPage().isEmpty()){
-            User user = getUser(update);
-            user.setPreviousPage(getUser(update).getUsingPage());
-            user.setUsingPage(usingPage);
-            userService.update(user);
-        }
-        else{
-            User user = getUser(update);
-            user.setPreviousPage("");
-            user.setUsingPage(usingPage);
-            userService.update(user);
-        }
-    }
 
 }

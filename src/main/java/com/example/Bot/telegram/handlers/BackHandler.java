@@ -32,7 +32,9 @@ public class BackHandler implements ICommand {
         switch (entityService.getUsersUsingPage(update)) {
             case "Channels menu":
                 entityService.setUsersUsingPage(update, "Main menu");
-                return messageService.buildMainUserPage(update, entityService.getChatId(update));
+                return entityService.getUser(update).getStatus().equals("Admin")?
+                        messageService.buildMainAdminPage(update, entityService.getChatId(update)):
+                        messageService.buildMainUserPage(update, entityService.getChatId(update));
 
             case "Input channel name":
                 entityService.setUserSelectedChannel(entityService.getUser(update), 0L);
@@ -110,9 +112,14 @@ public class BackHandler implements ICommand {
                 objects.add(messageService.deleteMessage(update, entityService.getChatId(update)));
                 objects.add(messageService.buildFirstPhotoOfSelectedChannel(update));
                 objects.add(messageService.buildSecondPhotoOfSelectedChannel(update));
-                entityService.setUsersUsingPage(update, "InfoOfSelectedUsersChannel");
                 objects.add(messageService.buildInfoOfSelectedUsersChannel(update));
-                entityService.setUsersMessageMenu(update, 3);
+                if(entityService.getUser(update).getPreviousPage().equals("Edit channel link")){
+                    entityService.setUsersMessageMenu(update, 4);
+                }
+                else {
+                    entityService.setUsersMessageMenu(update, 3);
+                }
+                entityService.setUsersUsingPage(update, "InfoOfSelectedUsersChannel");
                 return objects;
 
             case "Edit channel link":
@@ -134,7 +141,32 @@ public class BackHandler implements ICommand {
             case "Edit channel category":
                 entityService.setUsersUsingPage(update, "Edit link of admin");
                 return messageService.buildFifthAddingChannelPage(entityService.getChatId(update), entityService.getMessageId(update));
-
+            case "RaiseUpInTop":
+                entityService.setUsersUsingPage(update, "InfoOfSelectedUsersChannel");
+                objects.add(messageService.deleteMessage(update, entityService.getChatId(update)));
+                objects.add(messageService.deleteMessageById(entityService.getChatId(update), entityService.getMessageId(update)-1));
+                objects.add(messageService.buildFirstPhotoOfSelectedChannel(update));
+                objects.add(messageService.buildSecondPhotoOfSelectedChannel(update));
+                objects.add(messageService.buildInfoOfSelectedUsersChannel(update));
+                entityService.setUsersMessageMenu(update, 0);
+                return objects;
+            case "RaiseUpInCategory":
+                entityService.setUsersUsingPage(update, "InfoOfSelectedUsersChannel");
+                objects.add(messageService.deleteMessage(update, entityService.getChatId(update)));
+                objects.add(messageService.buildFirstPhotoOfSelectedChannel(update));
+                objects.add(messageService.buildSecondPhotoOfSelectedChannel(update));
+                objects.add(messageService.buildInfoOfSelectedUsersChannel(update));
+                entityService.setUsersMessageMenu(update, 0);
+                return objects;
+            case "SelectedRequest":
+                objects.add(messageService.deleteMessage(update, entityService.getChatId(update)));
+                objects.add(messageService.buildRequestsPage(update));
+                return objects;
+            case "Requests":
+                entityService.setUsersUsingPage(update, "Main menu");
+                objects.add(messageService.deleteMessage(update, entityService.getChatId(update)));
+                objects.add(messageService.buildStartAdminPage(entityService.getChatId(update)));
+                return objects;
             default:
                 return entityService.getUser(update).getStatus().equals("Admin") ?
                         messageService.buildMainAdminPage(update, entityService.getChatId(update)) :

@@ -1,12 +1,9 @@
 package com.example.Bot.telegram.controllers;
 
 
-import com.example.Bot.entities.Channel;
-import com.example.Bot.entities.User;
 import com.example.Bot.services.ChannelService;
 import com.example.Bot.services.EntityService;
 import com.example.Bot.services.NotebookService;
-import com.example.Bot.services.UserService;
 import com.example.Bot.telegram.handlers.*;
 import com.example.Bot.telegram.interfaces.ICommand;
 import com.example.Bot.telegram.services.MessageService;
@@ -14,10 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
-import java.io.File;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @Controller
@@ -50,6 +44,14 @@ public class CallbackQueryController {
         commands.put("/Back", new BackHandler(messageService, entityService, channelService));
         commands.put("/editChannel:", new EditChannelHandler(messageService, entityService));
         commands.put("/channels", new ChannelMenuHandler(messageService, entityService));
+        commands.put("/raiseUpInTop", new RaiseInTopHandler(messageService, entityService, channelService));
+        commands.put("/raiseUpInCategory", new RaiseInCategoryHandler(messageService, entityService));
+        commands.put("/confirmTop:", new ConfirmTopHandler(messageService, entityService, channelService, notebookService));
+        commands.put("/confirmCategory:", new ConfirmCategoryHandler(messageService, entityService, notebookService, channelService));
+        commands.put("/decline:", new DeclineHandler(messageService, entityService, notebookService, channelService));
+        commands.put("/requests", new ListRequestsHandler(messageService, entityService, notebookService));
+        commands.put("/request:", new SelecedRequestHandler(messageService, entityService, notebookService));
+        commands.put("/ok", new OkHandler(messageService, entityService));
     }
 
     public Object commandProcessing(Update update){

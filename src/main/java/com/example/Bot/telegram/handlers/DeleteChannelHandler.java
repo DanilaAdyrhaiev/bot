@@ -28,10 +28,12 @@ public class DeleteChannelHandler implements ICommand {
     public Object execute(Update update){
         List<Object> objects = new ArrayList<>();
         if(entityService.checkChannelsPhoto1IsExist(update)){
-            objects.add(messageService.deleteMessageById(entityService.getChatId(update), entityService.getMessageId(update) - 2));
-        }
-        if(entityService.checkChannelsPhoto2IsExist(update)){
-            objects.add(messageService.deleteMessageById(entityService.getChatId(update), entityService.getMessageId(update) - 1));
+            int index = 1;
+            if(entityService.checkChannelsPhoto2IsExist(update)){
+                objects.add(messageService.deleteMessageById(entityService.getChatId(update), entityService.getMessageId(update) - index));
+                index++;
+            }
+            objects.add(messageService.deleteMessageById(entityService.getChatId(update), entityService.getMessageId(update) - index));
         }
         channelService.deleteChannel(entityService.getUser(update).getSelectedChannel());
         objects.add(messageService.buildAccountPage(entityService.getChatId(update), entityService.getMessageId(update)));
