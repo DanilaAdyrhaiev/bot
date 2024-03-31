@@ -20,7 +20,8 @@ public class ListNewsHandler implements ICommand {
 
     @Override
     public Object execute(Update update){
-        entityService.setUsersUsingPage(update, "List of news");
-        return messageService.buildCategoryPage(update, entityService.getMessageId(update), "News");
+        int page = Integer.parseInt(update.getCallbackQuery().getData().replace("/listNews:", ""));
+        entityService.setUsersUsingPage(update, "List of news, page:" + page);
+        return messageService.buildNewsCategoryPage(update, entityService.getMessageId(update), "News", page);
     }
 }

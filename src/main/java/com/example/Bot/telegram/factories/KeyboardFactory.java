@@ -26,32 +26,6 @@ public class KeyboardFactory {
     }
 
 
-    public InlineKeyboardMarkup getTripleLineMarkup(Map<String, String> buttons){
-        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
-        List<List<InlineKeyboardButton>> rowList = new ArrayList<>();
-
-        List<InlineKeyboardButton> currentRow = new ArrayList<>();
-
-        for (Map.Entry<String, String> entry : buttons.entrySet()) {
-            currentRow.add(InlineKeyboardButton.builder()
-                    .text(entry.getKey())
-                    .callbackData(entry.getValue())
-                    .build());
-
-            if (currentRow.size() == 3) {
-                rowList.add(currentRow);
-                currentRow = new ArrayList<>();
-            }
-        }
-
-        if (!currentRow.isEmpty()) {
-            rowList.add(currentRow);
-        }
-
-        markup.setKeyboard(rowList);
-        return markup;
-    }
-
     public InlineKeyboardMarkup getOneThreeTwoMarkup(Map<String, String> buttons){
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> rowList = new ArrayList<>();

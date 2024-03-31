@@ -29,6 +29,7 @@ public class BackHandler implements ICommand {
     @Override
     public Object execute(Update update){
         List<Object> objects = new ArrayList<>();
+        int categoryPage;
         switch (entityService.getUsersUsingPage(update)) {
             case "Channels menu":
                 entityService.setUsersUsingPage(update, "Main menu");
@@ -79,22 +80,25 @@ public class BackHandler implements ICommand {
                 entityService.setUsersMessageMenu(update, 0);
                 switch(entityService.getUser(update).getPreviousPage()){
                     case "List of crypto signals":
+                        categoryPage = Integer.parseInt(entityService.getUser(update).getPreviousPage().replace("List top channel, page:", ""));
                         entityService.setUsersUsingPage(update, "List of crypto signals");
-                        objects.add(messageService.buildCategoryPage(update, entityService.getUser(update).getMessageMenu(), "Crypto signals"));
+                        objects.add(messageService.buildCryptoChannelsPage(update, entityService.getUser(update).getMessageMenu(), "Crypto signals", categoryPage));
                         break;
                     case "List of Airdrop/Retrodrop":
+                        categoryPage = Integer.parseInt(entityService.getUser(update).getPreviousPage().replace("List top channel, page:", ""));
                         entityService.setUsersUsingPage(update, "List of Airdrop/Retrodrop");
-                        objects.add(messageService.buildCategoryPage(update, entityService.getUser(update).getMessageMenu(), "Airdrop/Retrodrop"));
+                        objects.add(messageService.buildAirdropChannelsPage(update, entityService.getUser(update).getMessageMenu(), "Airdrop/Retrodrop", categoryPage));
                         break;
                     case "List of news":
+                        categoryPage = Integer.parseInt(entityService.getUser(update).getPreviousPage().replace("List top channel, page:", ""));
                         entityService.setUsersUsingPage(update, "List of news");
-                        objects.add(messageService.buildCategoryPage(update, entityService.getUser(update).getMessageMenu(), "News"));
+                        objects.add(messageService.buildNewsCategoryPage(update, entityService.getUser(update).getMessageMenu(), "News", categoryPage));
                         break;
                     default:
                         if(entityService.getUser(update).getPreviousPage().startsWith("List top channel, page:")) {
-                            int page = Integer.parseInt(entityService.getUser(update).getPreviousPage().replace("List top channel, page:", ""));
-                            entityService.setUsersUsingPage(update, "List top channel, page:" + page);
-                            objects.add(messageService.buildTopChannelsPage(update, entityService.getUser(update).getMessageMenu(), page));
+                            int topPage = Integer.parseInt(entityService.getUser(update).getPreviousPage().replace("List top channel, page:", ""));
+                            entityService.setUsersUsingPage(update, "List top channel, page:" + topPage);
+                            objects.add(messageService.buildTopChannelsPage(update, entityService.getUser(update).getMessageMenu(), topPage));
                         }
                 }
                 return objects;

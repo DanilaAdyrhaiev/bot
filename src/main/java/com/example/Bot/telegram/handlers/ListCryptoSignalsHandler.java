@@ -20,8 +20,9 @@ public class ListCryptoSignalsHandler implements ICommand {
 
     @Override
     public Object execute(Update update){
-        entityService.setUsersUsingPage(update, "List of crypto signals");
-        return messageService.buildCategoryPage(update, entityService.getMessageId(update),
-                "Crypto signals");
+        int page = Integer.parseInt(update.getCallbackQuery().getData().replace("/listCryptoSignals:", ""));
+        entityService.setUsersUsingPage(update, "List of crypto signals, page:"+page);
+        return messageService.buildCryptoChannelsPage(update, entityService.getMessageId(update),
+                "Crypto signals", page);
     }
 }

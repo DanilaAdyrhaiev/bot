@@ -31,12 +31,10 @@ public class Bot extends TelegramLongPollingBot {
     private final ChannelService channelService;
     private final UserService userService;
     private final MessageController messageController;
-
     private final CallbackQueryController commandController;
 
         public Bot(@Value("${bot.token}") String botToken, ChannelService channelService, UserService userService, MessageController messageController, CallbackQueryController commandController){
         super(botToken);
-
         this.channelService = channelService;
         this.userService = userService;
         this.messageController = messageController;

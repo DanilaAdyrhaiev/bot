@@ -108,9 +108,9 @@ public class MessageService {
 
     public EditMessageText buildMainChannelPage(Update update){
         channelPage.put("Top", "/listTop:1");
-        channelPage.put("Crypto signals", "/listCryptoSignals");
-        channelPage.put("Airdrop/Retrodrop", "/listAirdropRetrodrop");
-        channelPage.put("News", "/listNews");
+        channelPage.put("Crypto signals", "/listCryptoSignals:1");
+        channelPage.put("Airdrop/Retrodrop", "/listAirdrop:1");
+        channelPage.put("News", "/listNews:1");
         channelPage.put("Back", "/Back");
         EditMessageText val = EditMessageText.builder().text("Select a category to view")
                 .chatId(update.getCallbackQuery().getMessage().getChatId())
@@ -239,25 +239,120 @@ public class MessageService {
         return val;
     }
 
-    public EditMessageText buildCategoryPage(Update update, int messageId, String category){
+    public EditMessageText buildCryptoChannelsPage(Update update, int messageId, String category, int page){
         List<Channel> list= channelService.getAllChannelsSortedByRate();
         List<Channel> channels = list.stream().filter(x->x.getCategory().equals(category)).collect(Collectors.toList());
-        boolean isEmpty = true;
-        if(!channels.isEmpty()){
-            isEmpty = false;
-        }
-        if(!isEmpty){
-            for(Channel channel:  channels){
-                categoryPage.put(channel.getChannelName(), "/channelInfo:"+channel.getId());
+        String text;
+        if (!channels.isEmpty()) {
+            text = "List of channels:";
+            int startIndex = (page - 1) * 7;
+            int endIndex = Math.min(startIndex + 6, channels.size());
+            for (int i = startIndex; i < endIndex; i++) {
+                categoryPage.put(channels.get(i).getChannelName(), "/channelInfo:" + channels.get(i).getId());
             }
+            if(page == 1 && endIndex < channels.size()){
+                categoryPage.put(" ", "/empty1");
+                categoryPage.put("->", "/listCryptoSignals:" + (page + 1));
+            }else if(page >1){
+                categoryPage.put("<-", "/listCryptoSignals:" + (page - 1));
+                if(endIndex<channels.size()){
+                    categoryPage.put("->", "/listCryptoSignals:" + (page + 1));
+                }
+                else{
+                    categoryPage.put("  ", "/empty2");
+                }
+            }
+            categoryPage.put("Back", "/channels");
+        } else {
+            text = "Sorry, the channels have not been added";
+            categoryPage.put("Back", "/channels");
         }
-        categoryPage.put("Back", "/channels");
 
         EditMessageText val = EditMessageText.builder()
                 .text("List:")
                 .messageId(messageId)
                 .chatId(update.getCallbackQuery().getMessage().getChatId())
-                .replyMarkup(keyboardFactory.getMarkap(categoryPage))
+                .replyMarkup(keyboardFactory.getManyTwoOneMarkup(categoryPage))
+                .build();
+
+        categoryPage.clear();
+        return val;
+    }
+
+    public EditMessageText buildAirdropChannelsPage(Update update, int messageId, String category, int page){
+        List<Channel> list= channelService.getAllChannelsSortedByRate();
+        List<Channel> channels = list.stream().filter(x->x.getCategory().equals(category)).collect(Collectors.toList());
+        String text;
+        if (!channels.isEmpty()) {
+            text = "List of channels:";
+            int startIndex = (page - 1) * 7;
+            int endIndex = Math.min(startIndex + 6, channels.size());
+            for (int i = startIndex; i < endIndex; i++) {
+                categoryPage.put(channels.get(i).getChannelName(), "/channelInfo:" + channels.get(i).getId());
+            }
+            if(page == 1 && endIndex < channels.size()){
+                categoryPage.put(" ", "/empty1");
+                categoryPage.put("->", "/listAirdrop:" + (page + 1));
+            }else if(page >1){
+                categoryPage.put("<-", "/listAirdrop:" + (page - 1));
+                if(endIndex<channels.size()){
+                    categoryPage.put("->", "/listAirdrop:" + (page + 1));
+                }
+                else{
+                    categoryPage.put("  ", "/empty2");
+                }
+            }
+            categoryPage.put("Back", "/channels");
+        } else {
+            text = "Sorry, the channels have not been added";
+            categoryPage.put("Back", "/channels");
+        }
+
+        EditMessageText val = EditMessageText.builder()
+                .text("List:")
+                .messageId(messageId)
+                .chatId(update.getCallbackQuery().getMessage().getChatId())
+                .replyMarkup(keyboardFactory.getManyTwoOneMarkup(categoryPage))
+                .build();
+
+        categoryPage.clear();
+        return val;
+    }
+
+    public EditMessageText buildNewsCategoryPage(Update update, int messageId, String category, int page){
+        List<Channel> list= channelService.getAllChannelsSortedByRate();
+        List<Channel> channels = list.stream().filter(x->x.getCategory().equals(category)).collect(Collectors.toList());
+        String text;
+        if (!channels.isEmpty()) {
+            text = "List of channels:";
+            int startIndex = (page - 1) * 7;
+            int endIndex = Math.min(startIndex + 6, channels.size());
+            for (int i = startIndex; i < endIndex; i++) {
+                categoryPage.put(channels.get(i).getChannelName(), "/channelInfo:" + channels.get(i).getId());
+            }
+            if(page == 1 && endIndex < channels.size()){
+                categoryPage.put(" ", "/empty1");
+                categoryPage.put("->", "/listNews:" + (page + 1));
+            }else if(page >1){
+                categoryPage.put("<-", "/listNews:" + (page - 1));
+                if(endIndex<channels.size()){
+                    categoryPage.put("->", "/listNews:" + (page + 1));
+                }
+                else{
+                    categoryPage.put("  ", "/empty2");
+                }
+            }
+            categoryPage.put("Back", "/channels");
+        } else {
+            text = "Sorry, the channels have not been added";
+            categoryPage.put("Back", "/channels");
+        }
+
+        EditMessageText val = EditMessageText.builder()
+                .text("List:")
+                .messageId(messageId)
+                .chatId(getChatId(update))
+                .replyMarkup(keyboardFactory.getManyTwoOneMarkup(categoryPage))
                 .build();
 
         categoryPage.clear();
@@ -270,25 +365,23 @@ public class MessageService {
         if (!channels.isEmpty()) {
             text = "List of channels:";
             int startIndex = (page - 1) * 7;
-            int endIndex = Math.min(startIndex + 7, channels.size());
+            int endIndex = Math.min(startIndex + 6, channels.size());
             for (int i = startIndex; i < endIndex; i++) {
                 TopChannelsPage.put(channels.get(i).getChannelName(), "/channelInfo:" + channels.get(i).getId());
             }
-            if (!(page > 1) && !(endIndex < channels.size())) {
-                TopChannelsPage.put("Back", "/channels");
-            } else {
-                if (page > 1) {
-                    TopChannelsPage.put("<-", "/listTop:" + (page - 1));
-                } else {
-                    TopChannelsPage.put(" ", "/empty1");
-                }
-                if (endIndex < channels.size()) {
+            if(page == 1 && endIndex < channels.size()){
+                TopChannelsPage.put(" ", "/empty1");
+                TopChannelsPage.put("->", "/listTop:" + (page + 1));
+            }else if(page >1){
+                TopChannelsPage.put("<-", "/listTop:" + (page - 1));
+                if(endIndex<channels.size()){
                     TopChannelsPage.put("->", "/listTop:" + (page + 1));
-                } else {
+                }
+                else{
                     TopChannelsPage.put("  ", "/empty2");
                 }
-                TopChannelsPage.put("Back", "/channels");
             }
+            TopChannelsPage.put("Back", "/channels");
         } else {
             text = "Sorry, the channels have not been added";
             TopChannelsPage.put("Back", "/channels");
@@ -303,6 +396,8 @@ public class MessageService {
         TopChannelsPage.clear();
         return val;
     }
+
+
 
     public SendPhoto buildFirstPhotoOfSelectedChannel(Update update) {
         try {

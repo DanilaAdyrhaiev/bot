@@ -36,9 +36,9 @@ public class CallbackQueryController {
         commands.put("/chooseCS", new ChooseCryptoSignalsHandler(messageService, entityService));
         commands.put("/chooseAR", new ChooseAirdropOrRetrodropHandler(messageService, entityService));
         commands.put("/chooseN", new ChooseNewsHandler(messageService, entityService));
-        commands.put("/listCryptoSignals", new ListCryptoSignalsHandler(messageService, entityService));
-        commands.put("/listAirdropRetrodrop", new ListAirdropOrRetrodropHandler(messageService, entityService));
-        commands.put("/listNews", new ListNewsHandler(messageService, entityService));
+        commands.put("/listCryptoSignals:", new ListCryptoSignalsHandler(messageService, entityService));
+        commands.put("/listAirdrop:", new ListAirdropOrRetrodropHandler(messageService, entityService));
+        commands.put("/listNews:", new ListNewsHandler(messageService, entityService));
         commands.put("/Account", new AccountHandler(messageService, entityService));
         commands.put("/BackToMainMenu", new BackToMainMenuHandler(messageService, entityService));
         commands.put("/Back", new BackHandler(messageService, entityService, channelService));

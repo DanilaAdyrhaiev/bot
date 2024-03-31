@@ -20,8 +20,9 @@ public class ListAirdropOrRetrodropHandler implements ICommand {
 
     @Override
     public Object execute(Update update){
-        entityService.setUsersUsingPage(update, "List of Airdrop/Retrodrop");
-        return messageService.buildCategoryPage(update, entityService.getMessageId(update),
-                "Airdrop/Retrodrop");
+        int page = Integer.parseInt(update.getCallbackQuery().getData().replace("/listAirdrop:", ""));
+        entityService.setUsersUsingPage(update, "List of Airdrop/Retrodrop, page:"+page);
+        return messageService.buildAirdropChannelsPage(update, entityService.getMessageId(update),
+                "Airdrop/Retrodrop", page);
     }
 }
