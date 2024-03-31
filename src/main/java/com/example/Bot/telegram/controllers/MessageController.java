@@ -115,6 +115,7 @@ public class MessageController {
                                     -2));
                             objects.add(messageService.buildRaiseUpWaiterPage(update));
                             notebook = entityService.createNotebook(update);
+                            entityService.setUsersUsingPage(update, "RaiseUpInTopAfterPay");
                             if(notebook!=null){
                                 notebook.setCategory("Top");
                                 notebookService.update(notebook);
@@ -133,6 +134,7 @@ public class MessageController {
                             objects.add(messageService.deleteMessageById(entityService.getChatId(update), update.getMessage().getMessageId()
                                     -2));
                             objects.add(messageService.buildRaiseUpWaiterPage(update));
+                            entityService.setUsersUsingPage(update, "RaiseUpInCategoryAfterPay");
                             notebook = entityService.createNotebook(update);
                             if(notebook!=null){
                                 notebook.setCategory(entityService.getChannelByUser(update).getCategory());
@@ -145,8 +147,6 @@ public class MessageController {
                                     System.out.println("there are no administrators in the database");
                                 }
                             }
-                            return objects;
-                        case "RaiseUpInCategoryC":
                             return objects;
 
                         default:

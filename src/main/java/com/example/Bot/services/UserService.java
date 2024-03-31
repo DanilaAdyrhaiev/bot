@@ -53,39 +53,4 @@ public class UserService {
         return updateUser;
     }
 
-    @PostConstruct
-    private void init(){
-        File file = new File("User.json");
-        if(!file.exists()){
-            System.out.println("File 'User.json' does not exist. No action required.");
-            return;
-        }
-        try (FileReader reader = new FileReader("User.json")){
-            User[] users = gson.fromJson(reader, User[].class);
-            for(User user : users){
-                userRepository.save(user);
-                this.users.put(user.getId(), user);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    @PreDestroy
-    private void destroy(){
-        try{
-            File file = new File("User.json");
-            if(!file.exists()){
-                file.createNewFile();
-            }
-            String val = gson.toJson(users.values());
-            try (FileWriter writer = new FileWriter(file, false)) {
-                writer.write(val);
-                writer.flush();
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
 }

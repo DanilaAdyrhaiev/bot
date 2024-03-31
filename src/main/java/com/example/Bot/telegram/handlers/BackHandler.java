@@ -157,8 +157,24 @@ public class BackHandler implements ICommand {
             case "RaiseUpInCategory":
                 entityService.setUsersUsingPage(update, "InfoOfSelectedUsersChannel");
                 objects.add(messageService.deleteMessage(update, entityService.getChatId(update)));
+                objects.add(messageService.deleteMessageById(entityService.getChatId(update), entityService.getMessageId(update)-1));
                 objects.add(messageService.buildFirstPhotoOfSelectedChannel(update));
                 objects.add(messageService.buildSecondPhotoOfSelectedChannel(update));
+                objects.add(messageService.buildInfoOfSelectedUsersChannel(update));
+                entityService.setUsersMessageMenu(update, 0);
+                return objects;
+            case "RaiseUpInTopAfterPay":
+                entityService.setUsersUsingPage(update, "InfoOfSelectedUsersChannel");
+                objects.add(messageService.deleteMessage(update, entityService.getChatId(update)));
+                objects.add(messageService.buildFirstPhotoOfSelectedChannel(update));
+                objects.add(messageService.buildSecondPhotoOfSelectedChannel(update));
+                objects.add(messageService.buildInfoOfSelectedUsersChannel(update));
+                entityService.setUsersMessageMenu(update, 0);
+                return objects;
+            case "RaiseUpInCategoryAfterPay":
+                entityService.setUsersUsingPage(update, "InfoOfSelectedUsersChannel");
+                objects.add(messageService.deleteMessage(update, entityService.getChatId(update)));
+                objects.add(messageService.buildFirstPhotoOfSelectedChannel(update));                objects.add(messageService.buildSecondPhotoOfSelectedChannel(update));
                 objects.add(messageService.buildInfoOfSelectedUsersChannel(update));
                 entityService.setUsersMessageMenu(update, 0);
                 return objects;

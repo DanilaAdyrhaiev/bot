@@ -61,39 +61,5 @@ public class NotebookService {
         return notebookRepository.findByStatus(status);
     }
 
-    @PostConstruct
-    private void init(){
-        File file = new File("Notebook.json");
-        if(!file.exists()){
-            System.out.println("File 'Notebook.json' does not exist. No action required.");
-            return;
-        }
-        try (FileReader reader = new FileReader("Notebook.json")){
-            Notebook[] notebooks = gson.fromJson(reader, Notebook[].class);
-            for(Notebook notebook : notebooks){
-                notebookRepository.save(notebook);
-                this.notebooks.put(notebook.getId(), notebook);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    @PreDestroy
-    private void destroy(){
-        File file = new File("Notebook.json");
-        try{
-            if(!file.exists()){
-                file.createNewFile();
-            }
-            String val = gson.toJson(notebooks.values());
-            try (FileWriter writer = new FileWriter(file, false)) {
-                writer.write(val);
-                writer.flush();
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
 
 }

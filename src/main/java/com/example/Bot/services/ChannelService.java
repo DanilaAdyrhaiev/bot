@@ -75,39 +75,4 @@ public class ChannelService {
     public Channel getChannelWithHighestRateInCategory(String category) {
         return channelRepository.findFirstByCategoryOrderByRateDesc(category);
     }
-
-    @PostConstruct()
-    private void init(){
-        File file = new File("Channel.json");
-        if(!file.exists()){
-            System.out.println("File 'Channel.json' does not exist. No action required.");
-            return;
-        }
-        try (FileReader reader = new FileReader("Channel.json")){
-            Channel[] channels = gson.fromJson(reader, Channel[].class);
-            for(Channel channel : channels){
-                saveChannel(channel);
-                this.channels.put(channel.getId(), channel);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    @PreDestroy
-    private void destroy(){
-        File file = new File("Channel.json");
-        try{
-            if(!file.exists()){
-                file.createNewFile();
-            }
-            String val = gson.toJson(channels.values());
-            try (FileWriter writer = new FileWriter(file, false)) {
-                writer.write(val);
-                writer.flush();
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
 }
